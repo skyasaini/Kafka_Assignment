@@ -75,20 +75,20 @@ def main(topic):
             # SIGINT can't be handled when polling, limit timeout to 1 second.
             msg = consumer.poll(1.0)
             if msg is None:
-                if len(messages) != 0:
-                    df = pd.DataFrame.from_records(messages)
-                    if not os.path.isfile(FILE_PATH):
-                        df.to_csv(FILE_PATH, index=False)
-                    else:
-                        df.to_csv(FILE_PATH, mode='a', header=False, index=False)
-                    messages = []
                 continue
+
             restaurant = json_deserializer(msg.value(), SerializationContext(msg.topic(), MessageField.VALUE))
 
             if restaurant is not None:
-                print("User record {}: restaurant: {}\n"
-                      .format(msg.key(), restaurant))
                 messages.append(restaurant.record)
+                df = pd.DataFrame.from_records(messages)
+                if not os.path.isfile(FILE_PATH):
+                    df.to_csv(FILE_PATH, index=False)
+                else:
+                    df.to_csv(FILE_PATH, mode='a', header=False, index=False)
+                messages = []
+            print("User record {}:  restaurant: {}\n"
+                    .format(msg.key(),  restaurant))
 
         except KeyboardInterrupt:
             break
